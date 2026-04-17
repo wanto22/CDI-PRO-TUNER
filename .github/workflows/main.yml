@@ -25,27 +25,30 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
-      - name: Generate Project Files
+      - name: Prepare Project and Fix Gradle
         run: |
+          # 1. Membuat project
           cordova create ntech_app com.ntech.pro "NTECH_Pro"
           cd ntech_app
+          
+          # 2. Membuat folder www (wajib ada sebelum add platform)
+          mkdir -p www
+          echo "<html><body>NTECH PRO</body></html>" > www/index.html
+          
+          # 3. Tambah platform
           cordova platform add android@12.0.0
           cordova plugin add cordova-plugin-bluetooth-serial
           
-          # Membuat folder www agar tidak error saat build
-          mkdir -p www
-          echo "<html><body>NTECH PRO</body></html>" > www/index.html
-
-      - name: Fix Gradle Version (Downgrade to 8.7)
-        # Langkah ini untuk mengatasi error XmlParser pada Gradle 9.x
-        run: |
-          cd ntech_app/platforms/android
-          ./gradlew wrapper --gradle-version 8.7
+          # 4. FIX: Paksa download Gradle 8.7 menggunakan gradle sistem 
+          # karena ./gradlew mungkin belum ter-generate sempurna
+          cd platforms/android
+          gradle wrapper --gradle-version 8.7
 
       - name: Build Android APK
         run: |
           cd ntech_app
-          cordova build android --debug
+          # Menggunakan flag --no-daemon untuk menghemat memori di GitHub Actions
+          cordova build android --debug -- --no-daemon
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
