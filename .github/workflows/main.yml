@@ -27,189 +27,20 @@ jobs:
 
       - name: Generate Project Files
         run: |
-          # 1. Membuat project Cordova
           cordova create ntech_app com.ntech.pro "NTECH_Pro"
           cd ntech_app
-          
-          # 2. Menambahkan Platform Android 12 (Stabil untuk Java 17)
           cordova platform add android@12.0.0
-          
-          # 3. Menambahkan Plugin Bluetooth
           cordova plugin add cordova-plugin-bluetooth-serial
           
-          # 4. Membuat file konfigurasi utama
-          cat <<EOF > config.xml
-          <?xml version='1.0' encoding='utf-8'?>
-          <widget id="com.ntech.pro" version="1.1.0" xmlns="http://www.w3.org/ns/widgets">
-              <name>NTECH Pro Tuner</name>
-              <description>CDI Programmable Tuning App</description>
-              <author email="dev@ntech.pro" href="http://ntech.pro">NTECH Team</author>
-              <content src="index.html" />
-              <access origin="*" />
-              <preference name="android-minSdkVersion" value="24" />
-              <preference name="android-targetSdkVersion" value="33" />
-              <plugin name="cordova-plugin-bluetooth-serial" spec="~0.4.7" />
-          </widget>
-          EOF
-
-          # 5. Membuat folder www dan file index.html (UI Aplikasi)
+          # Membuat folder www agar tidak error saat build
           mkdir -p www
-          cat <<EOF > www/index.html
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-              <title>NTECH PRO</title>
-              <style>
-                  :root { --bg: #0d0d0d; --card: #1a1a1a; --accent: #00ff88; --warn: #ffcc00; --text: #f0f0f0; }
-                  body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; }
-                  .navbar { display: flex; justify-content: space-around; background: var(--card); position: fixed; bottom: 0; width: 100%; border-top: 1px solid #333; height: 70px; z-index: 1000; }
-                  .nav-item { padding: 10px; color: #666; font-size: 11px; text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center; font-weight: bold;}
-                  .nav-item.active { color: var(--accent); border-top: 3px solid var(--accent); background: #222; }
-                  .tab-content { display: none; padding: 15px; }
-                  .tab-content.active { display: block; }
-                  .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #262626; }
-                  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-                  .big-val { font-size: 32px; font-weight: bold; color: var(--accent); }
-                  .label { font-size: 10px; color: #888; text-transform: uppercase; }
-                  .table-scroll { height: 350px; overflow-y: auto; border: 1px solid #333; margin-top: 10px;}
-                  table { width: 100%; border-collapse: collapse; }
-                  th, td { border: 1px solid #222; padding: 8px; text-align: center; }
-                  input { width: 80%; background: #222; border: 1px solid #444; color: #fff; padding: 5px; border-radius: 4px; text-align: center;}
-                  button { background: #2979ff; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-weight: bold; margin-top: 5px; cursor: pointer; }
-                  .btn-save { background: var(--accent); color: #000; }
-                  .btn-fetch { background: var(--warn); color: #000; margin-bottom: 10px; }
-                  select { width: 100%; padding: 12px; background: #222; color: white; border-radius: 10px; margin-bottom: 10px; border: 1px solid #444; }
-              </style>
-          </head>
-          <body>
-              <div id="tab-monitor" class="tab-content active">
-                  <h3 style="text-align:center">MONITORING LIVE</h3>
-                  <div class="card"><button id="btnConn" onclick="connectBT()">HUBUNGKAN BLUETOOTH</button></div>
-                  <div class="grid">
-                      <div class="card"><div class="label">RPM Engine</div><div id="valRPM" class="big-val">0</div></div>
-                      <div class="card"><div class="label">Ignition Advance</div><div id="valAdv" class="big-val">0°</div></div>
-                      <div class="card"><div class="label">Signal Edge</div><div id="valEdge" class="big-val" style="font-size:20px">-</div></div>
-                      <div class="card"><div class="label">Rumble Mode</div><div id="valRumble" class="big-val" style="font-size:20px">OFF</div></div>
-                  </div>
-              </div>
+          echo "<html><body>NTECH PRO</body></html>" > www/index.html
 
-              <div id="tab-kurva" class="tab-content">
-                  <h3>MAP EDITOR</h3>
-                  <button class="btn-fetch" onclick="fetchData()">TARIK DATA DARI CDI</button>
-                  <select id="mapSelector" onchange="renderMapTable()">
-                      <option value="1">MAP 1 (Racing)</option>
-                      <option value="2">MAP 2 (Daily)</option>
-                      <option value="3">MAP 3 (Eco)</option>
-                  </select>
-                  <div class="table-scroll">
-                      <table>
-                          <thead><tr><th>#</th><th>RPM</th><th>Timing (°)</th></tr></thead>
-                          <tbody id="mapTableBody"></tbody>
-                      </table>
-                  </div>
-                  <button class="btn-save" onclick="saveAllMaps()">UPLOAD SEMUA MAP</button>
-              </div>
-
-              <div id="tab-setting" class="tab-content">
-                  <h3>SYSTEM SETTINGS</h3>
-                  <div class="card">
-                      <div class="grid">
-                          <div><label class="label">RPM Limiter</label><input type="number" id="setLim"></div>
-                          <div><label class="label">Pickup Angle</label><input type="number" id="setAng"></div>
-                          <div><label class="label">SCR Pulse</label><input type="number" id="setSCR"></div>
-                          <div><label class="label">Edge (0/1)</label><input type="number" id="setEdge"></div>
-                      </div>
-                  </div>
-                  <div class="card">
-                      <label class="label">Rumble Start RPM</label>
-                      <input type="number" id="setRblRPM" style="width:95%">
-                      <label class="label" style="margin-top:10px; display:block">Rumble Skip Pulse</label>
-                      <input type="number" id="setRblSkip" style="width:95%">
-                  </div>
-                  <button class="btn-save" onclick="saveSettings()">SIMPAN SYSTEM</button>
-              </div>
-
-              <div class="navbar">
-                  <div class="nav-item active" onclick="openTab(event, 'tab-monitor')">MONITOR</div>
-                  <div class="nav-item" onclick="openTab(event, 'tab-kurva')">KURVA</div>
-                  <div class="nav-item" onclick="openTab(event, 'tab-setting')">SETTING</div>
-              </div>
-
-              <script src="cordova.js"></script>
-              <script>
-                  let maps = { 1: Array(32).fill(0), 2: Array(32).fill(0), 3: Array(32).fill(0) };
-
-                  function openTab(e, n) {
-                      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                      document.getElementById(n).classList.add('active');
-                      e.currentTarget.classList.add('active');
-                  }
-
-                  function connectBT() {
-                      if (typeof bluetoothSerial === 'undefined') { alert("Bluetooth tidak tersedia"); return; }
-                      bluetoothSerial.list(ds => {
-                          let h = ds.find(d => d.name.includes("HC-05") || d.name.includes("BT") || d.name.includes("NTECH"));
-                          if(h) {
-                              bluetoothSerial.connect(h.address, () => {
-                                  document.getElementById('btnConn').innerText = "CONNECTED ✅";
-                                  document.getElementById('btnConn').style.background = "#00ff88";
-                                  bluetoothSerial.subscribe('\n', d => parse(d.trim()));
-                              }, () => alert("Koneksi Gagal!"));
-                          } else { alert("Perangkat Bluetooth tidak ditemukan!"); }
-                      });
-                  }
-
-                  function parse(d) {
-                      if(d.startsWith("RPM:")) document.getElementById('valRPM').innerText = d.split(":")[1];
-                      if(d.startsWith("ADV:")) document.getElementById('valAdv').innerText = d.split(":")[1] + "°";
-                      if(d.startsWith("LIM:")) document.getElementById('setLim').value = d.split(":")[1];
-                      if(d.startsWith("ANG:")) document.getElementById('setAng').value = d.split(":")[1];
-                      if(d.startsWith("M1:")) { maps[1] = d.substring(3).split(','); renderMapTable(); }
-                  }
-
-                  function renderMapTable() {
-                      let id = document.getElementById('mapSelector').value;
-                      let h = "";
-                      for(let i=0; i<32; i++) {
-                          let rpm = (i * 500) + 500;
-                          h += "<tr><td>"+(i+1)+"</td><td>"+rpm+"</td><td><input type='number' value='"+(maps[id][i] || 0)+"' onchange='maps["+id+"]["+i+"]=this.value'></td></tr>";
-                      }
-                      document.getElementById('mapTableBody').innerHTML = h;
-                  }
-
-                  function fetchData() { bluetoothSerial.write("GET\n"); }
-
-                  function saveAllMaps() {
-                      bluetoothSerial.write("M1:" + maps[1].join(',') + "\n");
-                      setTimeout(() => bluetoothSerial.write("M2:" + maps[2].join(',') + "\n"), 600);
-                      setTimeout(() => bluetoothSerial.write("M3:" + maps[3].join(',') + "\n"), 1200);
-                      setTimeout(() => { bluetoothSerial.write("SAVE\n"); alert("Data Terkirim!"); }, 1800);
-                  }
-
-                  function saveSettings() {
-                      let commands = [
-                          "LIM:" + document.getElementById('setLim').value,
-                          "ANG:" + document.getElementById('setAng').value,
-                          "EDG:" + document.getElementById('setEdge').value,
-                          "RBL:" + document.getElementById('setRblRPM').value,
-                          "SAVE"
-                      ];
-                      let i = 0;
-                      let interval = setInterval(() => {
-                          bluetoothSerial.write(commands[i] + "\n");
-                          i++;
-                          if(i >= commands.length) { clearInterval(interval); alert("System Saved!"); }
-                      }, 400);
-                  }
-
-                  document.addEventListener('deviceready', renderMapTable, false);
-              </script>
-          </body>
-          </html>
-          EOF
+      - name: Fix Gradle Version (Downgrade to 8.7)
+        # Langkah ini untuk mengatasi error XmlParser pada Gradle 9.x
+        run: |
+          cd ntech_app/platforms/android
+          ./gradlew wrapper --gradle-version 8.7
 
       - name: Build Android APK
         run: |
@@ -219,5 +50,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NTECH-PRO-DEBUG-APK
+          name: NTECH-PRO-APK
           path: ntech_app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
