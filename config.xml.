@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.ntech.cdipro" version="1.1.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>NTECH Pro Tuner</name>
+    <description>Advanced Tuning App for CDI v5.7F</description>
+    <author email="dev@ntech.com" href="https://github.com/ntech">NTECH Racing</author>
+    <content src="index.html" />
+    <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <preference name="android-minSdkVersion" value="24" />
+    <preference name="Orientation" value="portrait" />
+    <plugin name="cordova-plugin-bluetooth-serial" spec="~0.4.7" />
+</widget>
