@@ -27,27 +27,27 @@ jobs:
 
       - name: Prepare Project and Fix Gradle
         run: |
-          # 1. Membuat project
+          # 1. Membuat project Cordova
           cordova create ntech_app com.ntech.pro "NTECH_Pro"
           cd ntech_app
           
-          # 2. Membuat folder www (wajib ada sebelum add platform)
+          # 2. Membuat folder www (wajib ada agar platform add tidak error)
           mkdir -p www
-          echo "<html><body>NTECH PRO</body></html>" > www/index.html
+          echo "<html><body><h1>NTECH PRO READY</h1></body></html>" > www/index.html
           
-          # 3. Tambah platform
+          # 3. Menambahkan Platform Android 12
           cordova platform add android@12.0.0
           cordova plugin add cordova-plugin-bluetooth-serial
           
-          # 4. FIX: Paksa download Gradle 8.7 menggunakan gradle sistem 
-          # karena ./gradlew mungkin belum ter-generate sempurna
+          # 4. FIX: Menurunkan versi Gradle ke 8.7 menggunakan gradle sistem
+          # Ini untuk mengatasi error 'XmlParser' pada Gradle 9.x
           cd platforms/android
           gradle wrapper --gradle-version 8.7
 
       - name: Build Android APK
         run: |
           cd ntech_app
-          # Menggunakan flag --no-daemon untuk menghemat memori di GitHub Actions
+          # Menggunakan flag --no-daemon untuk efisiensi resource di GitHub Actions
           cordova build android --debug -- --no-daemon
 
       - name: Upload Artifact
