@@ -9,12 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Update ke v4
 
       - name: Setup Environment
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4 # Update ke v4
         with:
-          node-version: '18'
+          node-version: '20' # Gunakan Node 20 yang lebih stabil
 
       - name: Install Cordova
         run: npm install -g cordova
@@ -179,11 +179,10 @@ jobs:
       - name: Build APK
         run: |
           cd ntech_app
-          # Menyiapkan SDK Android secara implisit melalui Cordova build
           cordova build android --debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # Update ke v4
         with:
           name: NTECH-CDI-PRO-APK
           path: ntech_app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
